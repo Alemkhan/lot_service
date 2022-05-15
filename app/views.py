@@ -11,3 +11,8 @@ class LotApiView(ListCreateAPIView):
     serializer_class = LotSerializer
     queryset = models.Lot.objects.all()
 
+
+class LotDetailView(RetrieveUpdateDestroyAPIView):
+    serializer_class = LotSerializer
+    queryset = models.Lot.objects.all()
+
