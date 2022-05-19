@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  app:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_REGISTRY-}lot_service
+    volumes:
+      - .:/app
+      - .:/lot_service
+    ports:
+      - 8000:8000
