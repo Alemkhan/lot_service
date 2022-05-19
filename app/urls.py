@@ -4,7 +4,6 @@ from app import views
 
 urlpatterns = [
     path('lot/', views.LotApiView.as_view(), name="lot"),
-    path('lot/<int:pk>', views.LotDetailView.as_view(), name="lot_detail"),
     path('lot/detail', views.LotDetailView.as_view(), name="lot_detail")
     # path('user-detail/<int:pk>/', views.userDetail, name="user-detail"),
     # path('user-update/<int:pk>/', views.userUpdate, name="user-update"),
