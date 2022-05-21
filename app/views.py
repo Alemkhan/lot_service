@@ -19,6 +19,14 @@ class LotApiView(ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
         user_id = encoded_jwt.get('user_id')
+        crypto = CryptoService(user_id)
+        wallet_data = crypto.get_p2p_wallet()
+        if int(request.data['supply']) > wallet_data['balance']:
+            return Response({
+                'success': 'false',
+                'status code': status.HTTP_400_BAD_REQUEST,
+                'message': 'You do not have enough supply count in your p2p wallet'
+            }, status=status.HTTP_400_BAD_REQUEST)
         request.data['seller_id'] = user_id
         serializer = LotSerializer(data=request.data)
         if serializer.is_valid():
