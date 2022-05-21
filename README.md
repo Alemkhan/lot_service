@@ -1,5 +1,9 @@
+Sample API requests
 
 Create Lot request body
+```http request
+POST localhost:8000/api/lot
+```
 ```json
 {
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiYWxlbUBnbWFpbC5jb20iLCJleHBpcmVzIjoxNjUyODkyODU2LjM5NTA2NX0.6umWJmxIMLQJEfbhOkA9IT0RQKeWXq3vCVwH1Ka1Hx0",
@@ -11,11 +15,18 @@ Create Lot request body
     "currency": "eth"
 }
 ```
-
-Get Lot request body
+Get, Delete Lot request body
+```http request
+GET DELETE localhost:8000/api/lot/detail
+```
 ```json
 {
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiYWxlbUBnbWFpbC5jb20iLCJleHBpcmVzIjoxNjUyODkyODU2LjM5NTA2NX0.6umWJmxIMLQJEfbhOkA9IT0RQKeWXq3vCVwH1Ka1Hx0"
 }
+```
+
+Get all lots
+```http request
+GET localhost:8000/api/lot
 ```
 
