@@ -12,7 +12,7 @@ class LotType(models.TextChoices):
 
 
 class Lot(models.Model):
-    seller_id = models.CharField(null=False, blank=False, unique=True, max_length=200)
+    seller_id = models.CharField(null=False, blank=False, max_length=200)
     price = models.FloatField(null=False, blank=False)
     supply = models.FloatField(null=False, blank=False)
     min_limit = models.FloatField(null=False, blank=False)

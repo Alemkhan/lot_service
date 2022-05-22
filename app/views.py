@@ -1,13 +1,11 @@
 import jwt
-import requests
-from django.shortcuts import render
 
-# Create your views here.
 from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
 from app import models
+from app.pagination import SmallPagesPagination
 from app.serializers import LotSerializer
 from app.services import CryptoService
 
@@ -15,12 +13,20 @@ from app.services import CryptoService
 class LotApiView(ListCreateAPIView):
     serializer_class = LotSerializer
     queryset = models.Lot.objects.all()
+    pagination_class = SmallPagesPagination
 
     def post(self, request, *args, **kwargs):
         encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
         user_id = encoded_jwt.get('user_id')
         crypto = CryptoService(user_id)
         wallet_data = crypto.get_p2p_wallet()
+        resp = models.Lot.objects.filter(seller_id=user_id, lot_type=request.data['lot_type']).first()
+        if resp:
+            return Response({
+                'success': 'false',
+                'status code': status.HTTP_400_BAD_REQUEST,
+                'message': 'You already have an existing lot'
+            }, status=status.HTTP_400_BAD_REQUEST)
         if int(request.data['supply']) > wallet_data['balance']:
             return Response({
                 'success': 'false',
@@ -32,6 +38,7 @@ class LotApiView(ListCreateAPIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors)
 
 
 class LotDetailView(RetrieveUpdateDestroyAPIView):
