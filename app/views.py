@@ -21,7 +21,7 @@ class LotApiView(ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         self.serializer_class = LotCreationSerializer
-        encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
+        encoded_jwt = jwt.decode(request.data['access_token'], 'X]E&`I"mCdS1Y3uD+}_*lU?0~@|S6c', 'HS256')
         user_id = encoded_jwt.get('user_id')
         crypto = CryptoService(user_id)
         currency = request.data['currency']
@@ -53,7 +53,7 @@ class LotDetailView(RetrieveUpdateDestroyAPIView):
 
     def get(self, request):
         try:
-            encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
+            encoded_jwt = jwt.decode(request.data['access_token'], 'X]E&`I"mCdS1Y3uD+}_*lU?0~@|S6c', 'HS256')
             user_id = encoded_jwt.get('user_id')
             lot = models.Lot.objects.get(seller_id=user_id)
             crypto = CryptoService(user_id)
@@ -80,7 +80,7 @@ class LotDetailView(RetrieveUpdateDestroyAPIView):
         return Response(response, status=status_code)
 
     def put(self, request, format=None):
-        encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
+        encoded_jwt = jwt.decode(request.data['access_token'], 'X]E&`I"mCdS1Y3uD+}_*lU?0~@|S6c', 'HS256')
         user_id = encoded_jwt.get('user_id')
         lot = models.Lot.objects.get(seller_id=user_id)
         serializer = LotSerializer(lot, data=request.data)
@@ -90,7 +90,7 @@ class LotDetailView(RetrieveUpdateDestroyAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, format=None):
-        encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
+        encoded_jwt = jwt.decode(request.data['access_token'], 'X]E&`I"mCdS1Y3uD+}_*lU?0~@|S6c', 'HS256')
         user_id = encoded_jwt.get('user_id')
         lot = models.Lot.objects.get(seller_id=user_id)
         lot.delete()
@@ -102,7 +102,7 @@ class PaymentApiView(ListCreateAPIView):
     queryset = models.Payment.objects.all()
 
     def post(self, request, *args, **kwargs):
-        encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
+        encoded_jwt = jwt.decode(request.data['access_token'], 'X]E&`I"mCdS1Y3uD+}_*lU?0~@|S6c', 'HS256')
         user_id = encoded_jwt.get('user_id')
         request.data['seller_id'] = user_id
         serializer = PaymentSerializer(data=request.data)
@@ -118,7 +118,7 @@ class PaymentDetailView(RetrieveUpdateDestroyAPIView):
 
     def get(self, request):
         try:
-            encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
+            encoded_jwt = jwt.decode(request.data['access_token'], 'X]E&`I"mCdS1Y3uD+}_*lU?0~@|S6c', 'HS256')
             user_id = encoded_jwt.get('user_id')
             payments = models.Payment.objects.filter(seller_id=user_id).all()
             data = []
@@ -145,7 +145,7 @@ class PaymentDetailView(RetrieveUpdateDestroyAPIView):
         return Response(response, status=status_code)
 
     def delete(self, request, format=None):
-        encoded_jwt = jwt.decode(request.data['access_token'], 'qwe', 'HS256')
+        encoded_jwt = jwt.decode(request.data['access_token'], 'X]E&`I"mCdS1Y3uD+}_*lU?0~@|S6c', 'HS256')
         user_id = encoded_jwt.get('user_id')
         payments = models.Payment.objects.filter(seller_id=user_id).all()
         for payment in payments:
