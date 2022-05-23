@@ -51,3 +51,17 @@ GET DELETE localhost:8000/api/payment/detail
 ```http request
 GET localhost:8000/api/payment
 ```
+
+## Create payment data
+```http request
+POST localhost:8000/api/payment
+```
+```json
+{
+    "access_token": "",
+    "bank_name": "",
+    "requisite_number": "",
+    "payment_type": "phone"
+}
+```
+payment_types = ["phone", "bank_number"]
