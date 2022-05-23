@@ -35,6 +35,61 @@ GET DELETE localhost:8000/api/lot/detail
 ```http request
 GET localhost:8000/api/lot
 ```
+Response model
+```json
+{
+    "count": 2,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "id": 1,
+            "payment": [
+                {
+                    "id": 1,
+                    "seller_id": "alem@gmail.com",
+                    "bank_name": "kaspi",
+                    "requisite_number": "87079209311",
+                    "payment_type": "phone"
+                },
+                {
+                    "id": 2,
+                    "seller_id": "alem@gmail.com",
+                    "bank_name": "halyk",
+                    "requisite_number": "1111 2222 3333 4444",
+                    "payment_type": "bank_number"
+                }
+            ],
+            "seller_id": "alem@gmail.com",
+            "price": 100.0,
+            "supply": 0.0,
+            "min_limit": 0.0,
+            "max_limit": 0.0,
+            "lot_type": "sell",
+            "currency": "kzt"
+        },
+        {
+            "id": 2,
+            "payment": [
+                {
+                    "id": 4,
+                    "seller_id": "sungat@mail.ru",
+                    "bank_name": "jysan",
+                    "requisite_number": "2222 3333 4444 5555",
+                    "payment_type": "bank_number"
+                }
+            ],
+            "seller_id": "sungat@mail.ru",
+            "price": 300.0,
+            "supply": 10.0,
+            "min_limit": 0.0,
+            "max_limit": 10.0,
+            "lot_type": "buy",
+            "currency": "kzt"
+        }
+    ]
+}
+```
 
 ## Get Payment
 ### This api returns list of payment data related to user email, and can delete all payment data
