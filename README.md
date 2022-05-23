@@ -31,6 +31,48 @@ GET DELETE localhost:8000/api/lot/detail
 }
 ```
 
+Response body
+```json
+{
+    "success": "true",
+    "status code": 200,
+    "message": "Lot fetched successfully",
+    "data": {
+        "lot": {
+            "id": 1,
+            "payment": [
+                {
+                    "id": 1,
+                    "seller_id": "alem@gmail.com",
+                    "bank_name": "kaspi",
+                    "requisite_number": "87079209311",
+                    "payment_type": "phone"
+                },
+                {
+                    "id": 2,
+                    "seller_id": "alem@gmail.com",
+                    "bank_name": "halyk",
+                    "requisite_number": "1111 2222 3333 4444",
+                    "payment_type": "bank_number"
+                }
+            ],
+            "seller_id": "alem@gmail.com",
+            "price": 100.0,
+            "supply": 0.0,
+            "min_limit": 0.0,
+            "max_limit": 0.0,
+            "lot_type": "sell",
+            "currency": "kzt"
+        },
+        "wallet": {
+            "id": "62851355a83ea8fad65a9103",
+            "address": "0x14254a4a97bf67DEC1bA6240c9446003d250ae2b",
+            "balance": 0
+        }
+    }
+}
+```
+
 ##Get all lots
 ```http request
 GET localhost:8000/api/lot
