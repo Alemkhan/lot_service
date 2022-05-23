@@ -144,6 +144,33 @@ GET DELETE localhost:8000/api/payment/detail
 }
 ```
 
+Response model
+```json
+{
+    "success": "true",
+    "status code": 200,
+    "message": "Payment requisites fetched successfully",
+    "data": {
+        "payment": [
+            {
+                "id": 1,
+                "seller_id": "alem@gmail.com",
+                "bank_name": "kaspi",
+                "requisite_number": "87079209311",
+                "payment_type": "phone"
+            },
+            {
+                "id": 2,
+                "seller_id": "alem@gmail.com",
+                "bank_name": "halyk",
+                "requisite_number": "1111 2222 3333 4444",
+                "payment_type": "bank_number"
+            }
+        ]
+    }
+}
+```
+
 ##Get all payment data
 ```http request
 GET localhost:8000/api/payment
