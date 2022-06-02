@@ -20,9 +20,10 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("lot/", views.LotApiView.as_view(), name="lot"),
+    re_path(r"^lot/(?P<crypto_type>.+)/$", views.GetLotsAPIView.as_view(), name="get_lots"),
     path("payment/", views.PaymentApiView.as_view(), name="payment"),
     path("lot/detail/<int:pk>", views.LotDetailView.as_view(), name="lot_detail"),
-    path("payment/detail", views.PaymentDetailView.as_view(), name="payment_detail"),
+    path("payment/detail/<int:pk>", views.PaymentDetailView.as_view(), name="payment_detail"),
     re_path(
         r"^swagger(?P<format>\.json|\.yaml)$",
         schema_view.without_ui(cache_timeout=0),

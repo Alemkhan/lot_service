@@ -17,8 +17,22 @@ class PaymentCreationSerializer(serializers.ModelSerializer):
         exclude = ("user_email",)
 
 
+class PaymentLiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ("bank_name",)
+
+
 class LotSerializer(serializers.ModelSerializer):
     payment = PaymentSerializer(many=True)
+
+    class Meta:
+        model = Lot
+        fields = "__all__"
+
+
+class LotLiteSerializer(serializers.ModelSerializer):
+    payment = PaymentLiteSerializer(many=True)
 
     class Meta:
         model = Lot

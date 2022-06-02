@@ -14,8 +14,6 @@ class CryptoService:
         self.email = email
 
     def get_p2p_wallet(self, crypto_type: str) -> dict[str, Any]:
-        return {"balance": 100, "address": "someaddress"}
-
         response = requests.get(
             f"http://{os.environ.get('WALLET_SERVICE_API', 'host.docker.internal')}/wallets/{crypto_type}/email/{self.email}/p2p",
             verify=False,

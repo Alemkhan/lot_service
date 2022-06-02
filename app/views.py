@@ -1,46 +1,66 @@
 import os
 from decimal import ROUND_DOWN, Decimal
-from typing import Any
+from typing import Any, Type
 
-import django_filters
 import jwt
 from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
 from jwt import DecodeError
-from rest_framework import filters, status
-from rest_framework.generics import (ListCreateAPIView,
-                                     RetrieveUpdateDestroyAPIView)
+from rest_framework import status
+from rest_framework.pagination import BasePagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from app import models
-from app.exceptions import (AuthenticationRequiredException,
-                            LotAlreadyExistsException,
-                            NotEnoughBalanceException, NotFoundException,
-                            PermissionDeniedException)
+from app.exceptions import (
+    AuthenticationRequiredException,
+    LotAlreadyExistsException,
+    NotEnoughBalanceException,
+    NotFoundException,
+    PermissionDeniedException,
+)
 from app.pagination import SmallPagesPagination
-from app.serializers import (ChangeLotSupplySerializer, LotCreationSerializer,
-                             LotCreationSwaggerSerializer, LotSerializer,
-                             PaymentCreationSerializer, PaymentSerializer)
+from app.serializers import (
+    ChangeLotSupplySerializer,
+    LotCreationSerializer,
+    LotCreationSwaggerSerializer,
+    LotLiteSerializer,
+    LotSerializer,
+    PaymentCreationSerializer,
+    PaymentSerializer,
+)
 from app.services import CryptoService, get_current_user_data
+
+
+class GenericAPIView(APIView):
+    pagination_class: Type[BasePagination]
+
+    @property
+    def paginator(self):
+        if not hasattr(self, "_paginator"):
+            if self.pagination_class is None:
+                self._paginator = None
+            else:
+                self._paginator = self.pagination_class()
+        else:
+            pass
+        return self._paginator
+
+    def paginate_queryset(self, queryset):
+
+        if self.paginator is None:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    def get_paginated_response(self, data):
+        assert self.paginator is not None
+        return self.paginator.get_paginated_response(data)
 
 
 class LotApiView(APIView):
     serializer_class = LotSerializer
     queryset = models.Lot.objects.all()
-    pagination_class = SmallPagesPagination
-    filter_backends = [
-        filters.SearchFilter,
-        django_filters.rest_framework.DjangoFilterBackend,
-    ]
-    search_fields = ["$price", "$lot_type", "$payment__bank_name"]
-    filterset_fields = [
-        "lot_type",
-        "price",
-        "payment__bank_name",
-        "payment__payment_type",
-    ]
 
     @swagger_auto_schema(request_body=LotCreationSwaggerSerializer())
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
@@ -83,6 +103,22 @@ class LotApiView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors)
+
+
+class GetLotsAPIView(GenericAPIView):
+    serializer_class = LotLiteSerializer
+    queryset = models.Lot.objects.all()
+    pagination_class = SmallPagesPagination
+
+    def get(self, request: Request, crypto_type: str) -> Response:
+        existing_lots: list[models.Lot] = self.queryset.filter(crypto_currency=crypto_type)
+        page = self.paginate_queryset(existing_lots)
+        if page:
+            serializer = self.get_paginated_response(self.serializer_class(page, many=True).data)
+        else:
+            serializer = self.serializer_class(existing_lots, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class LotDetailView(APIView):
@@ -141,19 +177,7 @@ class LotDetailView(APIView):
     @transaction.atomic
     @swagger_auto_schema(request_body=ChangeLotSupplySerializer())
     def patch(self, request: Request, pk: int) -> Response:
-        encoded_jwt = get_current_user_data(request)
-        user_email = encoded_jwt.get(
-            "user_id",
-        )
-        user_role = encoded_jwt.get("role")
-
         existing_lot: models.Lot = self.get_object(pk=pk)
-
-        if existing_lot.lot_initiator_email != user_email and user_role not in [
-            "A",
-            "SU",
-        ]:
-            raise PermissionDeniedException
 
         serializer = ChangeLotSupplySerializer(data=request.data)
 
@@ -198,9 +222,25 @@ class LotDetailView(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class PaymentApiView(ListCreateAPIView):
+class PaymentApiView(APIView):
     serializer_class = PaymentSerializer
     queryset = models.Payment.objects.all()
+
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        encoded_jwt = get_current_user_data(request)
+        user_email = encoded_jwt.get(
+            "user_id",
+        )
+        user_role = encoded_jwt.get("role")
+
+        if user_role in ["A", "SU"]:
+            payments: list[models.Payment] = self.queryset.all()
+        else:
+            payments: list[models.Payment] = self.queryset.filter(user_email=user_email)
+
+        serializer = self.serializer_class(payments, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(request_body=PaymentCreationSerializer())
     def post(self, request, *args, **kwargs):
@@ -221,44 +261,33 @@ class PaymentApiView(ListCreateAPIView):
         return Response(serializer.errors)
 
 
-class PaymentDetailView(RetrieveUpdateDestroyAPIView):
+class PaymentDetailView(APIView):
     serializer_class = PaymentSerializer
-    queryset = models.Payment.objects.all()
 
-    def get(self, request, **kwargs):
+    def get_object(self, pk):
         try:
-            encoded_jwt = jwt.decode(request.COOKIES.get("access-jwt"), os.environ.get("SECRET_KEY"), "HS256")
-        except DecodeError:
-            raise AuthenticationRequiredException
+            return models.Payment.objects.get(pk=pk)
+        except models.Payment.DoesNotExist:
+            raise NotFoundException(detail="Lot not found")
 
-        try:
-            encoded_jwt = jwt.decode(request.data["access_token"], 'X]E&`I"mCdS1Y3uD+}_*lU?0~@|S6c', "HS256")
-            user_id = encoded_jwt.get(
-                "user_id",
-            )
-            payments = models.Payment.objects.filter(seller_id=user_id).all()
-            data = []
-            for payment in payments:
-                serializer = self.serializer_class(payment)
-                data.append(serializer.data)
-            status_code = status.HTTP_200_OK
-            response = {
-                "success": "true",
-                "status code": status_code,
-                "message": "Payment requisites fetched successfully",
-                "data": {
-                    "payment": data,
-                },
-            }
-        except Exception as e:
-            status_code = status.HTTP_400_BAD_REQUEST
-            response = {
-                "success": "false",
-                "status code": status.HTTP_400_BAD_REQUEST,
-                "message": "Payment requisites does not exists",
-                "error": str(e),
-            }
-        return Response(response, status=status_code)
+    def get(self, request: Request, pk: int):
+        encoded_jwt = get_current_user_data(request)
+        user_email = encoded_jwt.get(
+            "user_id",
+        )
+        user_role = encoded_jwt.get("role")
+
+        existing_payment: models.Payment = self.get_object(pk=pk)
+
+        if existing_payment.user_email != user_email and user_role not in [
+            "A",
+            "SU",
+        ]:
+            raise PermissionDeniedException
+
+        serializer = self.serializer_class(existing_payment)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, format=None, **kwargs):
         try:
