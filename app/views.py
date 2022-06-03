@@ -132,19 +132,7 @@ class LotDetailView(APIView):
             raise NotFoundException(detail="Lot not found")
 
     def get(self, request: Request, pk: int) -> Response:
-        encoded_jwt = get_current_user_data(request)
-        user_email = encoded_jwt.get(
-            "user_id",
-        )
-        user_role = encoded_jwt.get("role")
-
         existing_lot: models.Lot = self.get_object(pk=pk)
-
-        if existing_lot.lot_initiator_email != user_email and user_role not in [
-            "A",
-            "SU",
-        ]:
-            raise PermissionDeniedException
 
         serializer = self.serializer_class(existing_lot)
 
