@@ -15,23 +15,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from app import models
-from app.exceptions import (
-    AuthenticationRequiredException,
-    LotAlreadyExistsException,
-    NotEnoughBalanceException,
-    NotFoundException,
-    PermissionDeniedException,
-)
+from app.exceptions import (AuthenticationRequiredException,
+                            LotAlreadyExistsException,
+                            NotEnoughBalanceException, NotFoundException,
+                            PermissionDeniedException)
 from app.pagination import SmallPagesPagination
-from app.serializers import (
-    ChangeLotSupplySerializer,
-    LotCreationSerializer,
-    LotCreationSwaggerSerializer,
-    LotLiteSerializer,
-    LotSerializer,
-    PaymentCreationSerializer,
-    PaymentSerializer,
-)
+from app.serializers import (ChangeLotSupplySerializer, LotCreationSerializer,
+                             LotCreationSwaggerSerializer, LotLiteSerializer,
+                             LotSerializer, PaymentCreationSerializer,
+                             PaymentSerializer)
 from app.services import CryptoService, get_current_user_data
 
 
@@ -121,8 +113,11 @@ class LotApiView(GenericAPIView):
         "sell_type", openapi.IN_QUERY, description="Sell type: Sell, Buy", type=openapi.TYPE_STRING
     )
     email = openapi.Parameter("email", openapi.IN_QUERY, description="Trader's email", type=openapi.TYPE_STRING)
+    payment_type = openapi.Parameter(
+        "payment_type", openapi.IN_QUERY, description="Payment Type", type=openapi.TYPE_STRING
+    )
 
-    @swagger_auto_schema(manual_parameters=[crypto_type, sell_type, email])
+    @swagger_auto_schema(manual_parameters=[crypto_type, sell_type, email, payment_type])
     def get(self, request: Request) -> Response:
         serializer = LotLiteSerializer
         lookup = Q()
@@ -135,6 +130,9 @@ class LotApiView(GenericAPIView):
 
         if sell_type := request.GET.get("sell_type"):
             lookup &= Q(lot_type=sell_type)
+
+        if payment_type := request.GET.get("payment_type"):
+            lookup &= Q(payment__bank_name__icontains=payment_type)
 
         existing_lots: list[models.Lot] = self.queryset.filter(lookup).order_by("price")
         page = self.paginate_queryset(existing_lots)
