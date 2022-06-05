@@ -134,6 +134,14 @@ class LotApiView(GenericAPIView):
         if payment_type := request.GET.get("payment_type"):
             lookup &= Q(payment__bank_name__icontains=payment_type)
 
+        if request.GET.get("show_personal"):
+            encoded_jwt = get_current_user_data(request)
+            user_email = encoded_jwt.get(
+                "user_id",
+            )
+            serializer = LotSerializer
+            lookup &= Q(lot_initiator_email=user_email)
+
         existing_lots: list[models.Lot] = self.queryset.filter(lookup).order_by("price")
         page = self.paginate_queryset(existing_lots)
         if page:
