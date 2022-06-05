@@ -21,6 +21,7 @@ inflection==0.5.1
 isort==5.10.1
 itypes==1.2.0
 Jinja2==3.1.2
+loguru==0.6.0
 MarkupSafe==2.1.1
 mccabe==0.6.1
 mypy==0.950
@@ -48,3 +49,4 @@ types-urllib3==1.26.15
 typing_extensions==4.2.0
 uritemplate==4.1.1
 urllib3==1.26.9
+win32-setctime==1.1.0

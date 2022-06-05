@@ -66,6 +66,7 @@ class LotApiView(GenericAPIView):
     pagination_class = SmallPagesPagination
 
     @swagger_auto_schema(request_body=LotCreationSwaggerSerializer())
+    @transaction.atomic
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         encoded_jwt = get_current_user_data(request)
 

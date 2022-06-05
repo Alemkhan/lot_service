@@ -7,6 +7,7 @@ from django.conf import settings
 from rest_framework.request import Request
 
 from app.exceptions import AuthenticationRequiredException
+from lot_service.loguru_settings import service_logger
 
 
 class CryptoService:
@@ -31,6 +32,10 @@ class CryptoService:
             verify=False,
             data={"walletId": blockchain_id, "amount": float(amount)},  # type: ignore
             headers={"Content-Type": "application/json"},
+        )
+
+        service_logger.info(
+            f"Increase seller wallet balance responded with status: {response.status_code} and {response.text}"
         )
 
         response.raise_for_status()
