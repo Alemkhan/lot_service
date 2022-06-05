@@ -21,6 +21,20 @@ class CryptoService:
         if response.ok:
             return response.json()
 
+    def increase_seller_wallet_balance(
+        self, amount: float, blockchain_id: str, crypto_type: str, sell_type: str
+    ) -> None:
+        balance_increase_url: str = "increaseToSell" if sell_type == "sell" else "increaseToBuy"
+
+        response = requests.put(
+            f"http://{os.environ.get('WALLET_SERVICE_API', 'host.docker.internal')}/wallets/{crypto_type}/p2p/{balance_increase_url}",
+            verify=False,
+            data={"walletId": blockchain_id, "amount": float(amount)},  # type: ignore
+            headers={"Content-Type": "application/json"},
+        )
+
+        response.raise_for_status()
+
 
 def get_current_user_data(request: Request) -> dict[str, Any]:
     unauthorized_exc = AuthenticationRequiredException()

@@ -4,6 +4,8 @@ from typing import Any, Type
 
 import jwt
 from django.db import transaction
+from django.db.models import Q
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from jwt import DecodeError
 from rest_framework import status
@@ -13,23 +15,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from app import models
-from app.exceptions import (
-    AuthenticationRequiredException,
-    LotAlreadyExistsException,
-    NotEnoughBalanceException,
-    NotFoundException,
-    PermissionDeniedException,
-)
+from app.exceptions import (AuthenticationRequiredException,
+                            LotAlreadyExistsException,
+                            NotEnoughBalanceException, NotFoundException,
+                            PermissionDeniedException)
 from app.pagination import SmallPagesPagination
-from app.serializers import (
-    ChangeLotSupplySerializer,
-    LotCreationSerializer,
-    LotCreationSwaggerSerializer,
-    LotLiteSerializer,
-    LotSerializer,
-    PaymentCreationSerializer,
-    PaymentSerializer,
-)
+from app.serializers import (ChangeLotSupplySerializer, LotCreationSerializer,
+                             LotCreationSwaggerSerializer, LotLiteSerializer,
+                             LotSerializer, PaymentCreationSerializer,
+                             PaymentSerializer)
 from app.services import CryptoService, get_current_user_data
 
 
@@ -58,9 +52,10 @@ class GenericAPIView(APIView):
         return self.paginator.get_paginated_response(data)
 
 
-class LotApiView(APIView):
+class LotApiView(GenericAPIView):
     serializer_class = LotSerializer
     queryset = models.Lot.objects.all()
+    pagination_class = SmallPagesPagination
 
     @swagger_auto_schema(request_body=LotCreationSwaggerSerializer())
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
@@ -100,23 +95,44 @@ class LotApiView(APIView):
 
         if serializer.is_valid():
             serializer.save()
+            crypto_service.increase_seller_wallet_balance(
+                float(request.data["supply"]),
+                wallet_data["id"],
+                request.data["crypto_currency"],
+                request.data["lot_type"],
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors)
 
+    crypto_type = openapi.Parameter(
+        "crypto_type", openapi.IN_QUERY, description="Crypto type: ETH, ERC20", type=openapi.TYPE_STRING
+    )
+    sell_type = openapi.Parameter(
+        "sell_type", openapi.IN_QUERY, description="Sell type: Sell, Buy", type=openapi.TYPE_STRING
+    )
+    email = openapi.Parameter("email", openapi.IN_QUERY, description="Trader's email", type=openapi.TYPE_STRING)
 
-class GetLotsAPIView(GenericAPIView):
-    serializer_class = LotLiteSerializer
-    queryset = models.Lot.objects.all()
-    pagination_class = SmallPagesPagination
+    @swagger_auto_schema(manual_parameters=[crypto_type, sell_type, email])
+    def get(self, request: Request) -> Response:
+        serializer = LotLiteSerializer
+        lookup = Q()
 
-    def get(self, request: Request, crypto_type: str) -> Response:
-        existing_lots: list[models.Lot] = self.queryset.filter(crypto_currency=crypto_type)
+        if crypto_type := request.GET.get("crypto_type"):
+            lookup &= Q(crypto_currency=crypto_type)
+
+        if trader_email := request.GET.get("email"):
+            lookup &= Q(lot_initiator_email=trader_email)
+
+        if sell_type := request.GET.get("sell_type"):
+            lookup &= Q(lot_type=sell_type)
+
+        existing_lots: list[models.Lot] = self.queryset.filter(lookup)
         page = self.paginate_queryset(existing_lots)
         if page:
-            serializer = self.get_paginated_response(self.serializer_class(page, many=True).data)
+            serializer = self.get_paginated_response(serializer(page, many=True).data)
         else:
-            serializer = self.serializer_class(existing_lots, many=True)
+            serializer = serializer(existing_lots, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -179,7 +195,10 @@ class LotDetailView(APIView):
         if new_supply < 0:
             raise NotEnoughBalanceException
 
-        new_supply = {"supply": new_supply}
+        if new_supply == 0:
+            new_supply = {"supply": new_supply, "is_active": False}
+        else:
+            new_supply = {"supply": new_supply}
 
         serializer = LotSerializer(existing_lot, data=new_supply, partial=True)
 
