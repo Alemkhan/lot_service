@@ -15,15 +15,23 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from app import models
-from app.exceptions import (AuthenticationRequiredException,
-                            LotAlreadyExistsException,
-                            NotEnoughBalanceException, NotFoundException,
-                            PermissionDeniedException)
+from app.exceptions import (
+    AuthenticationRequiredException,
+    LotAlreadyExistsException,
+    NotEnoughBalanceException,
+    NotFoundException,
+    PermissionDeniedException,
+)
 from app.pagination import SmallPagesPagination
-from app.serializers import (ChangeLotSupplySerializer, LotCreationSerializer,
-                             LotCreationSwaggerSerializer, LotLiteSerializer,
-                             LotSerializer, PaymentCreationSerializer,
-                             PaymentSerializer)
+from app.serializers import (
+    ChangeLotSupplySerializer,
+    LotCreationSerializer,
+    LotCreationSwaggerSerializer,
+    LotLiteSerializer,
+    LotSerializer,
+    PaymentCreationSerializer,
+    PaymentSerializer,
+)
 from app.services import CryptoService, get_current_user_data
 
 
@@ -127,7 +135,7 @@ class LotApiView(GenericAPIView):
         if sell_type := request.GET.get("sell_type"):
             lookup &= Q(lot_type=sell_type)
 
-        existing_lots: list[models.Lot] = self.queryset.filter(lookup)
+        existing_lots: list[models.Lot] = self.queryset.filter(lookup).order_by("price")
         page = self.paginate_queryset(existing_lots)
         if page:
             serializer = self.get_paginated_response(serializer(page, many=True).data)
